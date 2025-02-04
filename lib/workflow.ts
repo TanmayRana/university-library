@@ -29,7 +29,7 @@ export const sendEmail = async ({
     },
     body: {
       //TODO: change this from Acme to your domain
-      from: "Acme <https://university-library-tau-two.vercel.app>",
+      from: "Acme <testemail9733@gmail.com>",
       to: [email],
       subject,
       html: message,
