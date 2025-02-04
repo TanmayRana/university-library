@@ -10,6 +10,8 @@ import { signIn } from "@/auth";
 import { headers } from "next/headers";
 import ratelimit from "../ratelimit";
 import { redirect } from "next/navigation";
+import { workflowClient } from "../workflow";
+import config from "../config";
 
 export const signInWithCredentials = async (
   params: Pick<AuthCredentials, "email" | "password">
@@ -44,52 +46,6 @@ export const signInWithCredentials = async (
   }
 };
 
-// export const signUp = async (params: AuthCredentials) => {
-//   const { fullName, email, password, universityCard, universityId } = params;
-
-//   const ip = (await headers()).get("x-forwarded-for") || "127.0.0.1";
-//   const { success } = await ratelimit.limit(ip);
-
-//   if (!success) return redirect("/to-fast");
-
-//   const existingUser = await db
-//     .select()
-//     .from(users)
-//     .where(eq(users.email, email))
-//     .limit(1);
-
-//   if (existingUser.length > 0) {
-//     return {
-//       success: false,
-//       error: "User already exists",
-//     };
-//   }
-//   const hashedPassword = await bcrypt.hash(password, 10);
-
-//   try {
-//     await db.insert(users).values({
-//       fullName,
-//       email,
-//       password: hashedPassword,
-//       universityCard,
-//       universityId,
-//     });
-//     await signInWithCredentials({ email, password });
-//     return {
-//       success: true,
-//       error: null,
-//     };
-//   } catch (error) {
-//     console.log(error);
-//     return {
-//       success: false,
-//       error: "Something went wrong in signup",
-//     };
-//   }
-// };
-
-// export default signUp;
-
 export const signUp = async (
   params: AuthCredentials
 ): Promise<{
@@ -99,7 +55,6 @@ export const signUp = async (
   const { fullName, email, password, universityCard, universityId } = params;
 
   try {
-    // Get IP for rate limiting
     const ip = (await headers()).get("x-forwarded-for") || "127.0.0.1";
     const { success } = await ratelimit.limit(ip);
 
@@ -124,10 +79,8 @@ export const signUp = async (
       };
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert new user into DB
     await db.insert(users).values({
       fullName,
       email,
@@ -136,7 +89,14 @@ export const signUp = async (
       universityId,
     });
 
-    // Auto sign in the user
+    await workflowClient.trigger({
+      url: `${config.env.prodApiEndpoint}/api/workflows/onboarding`,
+      body: {
+        email,
+        fullName,
+      },
+    });
+
     await signInWithCredentials({ email, password });
 
     return {
