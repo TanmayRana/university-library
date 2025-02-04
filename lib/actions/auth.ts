@@ -90,7 +90,7 @@ export const signUp = async (
     });
 
     await workflowClient.trigger({
-      url: `${config.env.prodApiEndpoint}/api/workflows/onboarding`,
+      url: `${config.env.vercelapiEndpoint}/api/workflows/onboarding`,
       body: {
         email,
         fullName,
