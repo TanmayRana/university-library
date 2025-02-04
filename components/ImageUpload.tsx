@@ -14,6 +14,8 @@ const {
   },
 } = config;
 
+console.log(config.env.vercelapiEndpoint);
+
 const authenticator = async () => {
   try {
     const response = await fetch(`${config.env.apiEndpoint}/api/auth/imagekit`);
